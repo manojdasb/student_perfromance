@@ -1,30 +1,10 @@
 import gradio as gr
-import pandas as pd
 import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import LabelEncoder
+import joblib
 
-df = pd.read_csv("StudentsPerformance.csv")
-df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-df.rename(columns={
-    "race/ethnicity":              "ethnicity",
-    "parental_level_of_education": "parental_edu",
-    "test_preparation_course":     "test_prep",
-    "math_score":                  "math",
-    "reading_score":               "reading",
-    "writing_score":               "writing"
-}, inplace=True)
-
-df["reading_writing_avg"] = (df["reading"] + df["writing"]) / 2
-
-le_dict = {}
-for col in ["gender", "parental_edu", "lunch", "test_prep"]:
-    le = LabelEncoder()
-    df[col] = le.fit_transform(df[col])
-    le_dict[col] = le
-
-model = LinearRegression()
-model.fit(df[["gender","parental_edu","lunch","test_prep","reading_writing_avg"]], df["math"])
+# Load saved model & encoders
+model   = joblib.load("model.pkl")
+le_dict = joblib.load("encoders.pkl")
 
 def predict(gender, parental_edu, lunch, test_prep, reading, writing):
     score = model.predict([[
@@ -52,14 +32,3 @@ gr.Interface(
     title="🎓 Student Math Score Predictor",
     description="Predicts Math Score using Linear Regression",
 ).launch()
-```
-
----
-
-### File 3 — `StudentsPerformance.csv`
-```
-This one you CANNOT type manually — it has 1000 rows!
-
-Instead:
-1. Click "Add file" → "Upload files"
-2. Drag the CSV from your computer or Colab
